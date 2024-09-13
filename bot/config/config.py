@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     PLAY_GAMES: bool = True
     POINTS: list[int] = [50, 65]
-    TON_AMOUNT: list[float] = [0.045, 0.055]
+    TON_AMOUNT: list[float] = [0.040, 0.055]
 
     USE_REF: bool = False
     REF_ID: str = 'kentId6168926126'
