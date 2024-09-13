@@ -304,6 +304,7 @@ class Tapper:
 
                 await self.daily_milk(http_client=http_client, daily_milk=user_info.get('dailyMilk'))
 
+                return
 
             except InvalidSession as error:
                 raise error
