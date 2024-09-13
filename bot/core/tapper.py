@@ -261,6 +261,7 @@ class Tapper:
                     self.success(f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
                     daily_milk = daily_milk - 1
+                    await asyncio.sleep(random.randint(5, 10))
         except Exception as e:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
 
