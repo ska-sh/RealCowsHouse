@@ -289,6 +289,7 @@ class Tapper:
 
         if proxy:
             await self.check_proxy(http_client=http_client, proxy=proxy)
+
         while True:
             try:
                 if login_need:
@@ -309,6 +310,10 @@ class Tapper:
                 await self.daily_reward(http_client=http_client)
                 #点击有牛奶
                 await self.daily_milk(http_client=http_client, daily_milk=user_info.get('dailyMilk'))
+
+                self.info(f"任务完成，休眠24小时")
+                await asyncio.sleep(24 * 60 * 60)
+
             except InvalidSession as error:
                 raise error
             except Exception as error:
