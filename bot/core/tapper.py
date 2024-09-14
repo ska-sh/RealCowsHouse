@@ -257,7 +257,7 @@ class Tapper:
                              "bonus": bonus}
                 resp = await http_client.post('https://realcowshouse.fun/api/user/save-ton', json=json_data, ssl=False)
                 resp_json = await resp.json()
-                if resp_json['user']['dailyMilk'] > 0:
+                if resp_json['status'] == u'success':
                     self.success(f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
                     daily_milk = daily_milk - 1
@@ -285,7 +285,10 @@ class Tapper:
 
         if proxy:
             await self.check_proxy(http_client=http_client, proxy=proxy)
-        while True:
+
+        running = True
+
+        while running:
             try:
                 if login_need:
                     if "Authorization" in http_client.headers:
@@ -304,7 +307,7 @@ class Tapper:
 
                 await self.daily_milk(http_client=http_client, daily_milk=user_info.get('dailyMilk'))
 
-                return
+                running = False
 
             except InvalidSession as error:
                 raise error
