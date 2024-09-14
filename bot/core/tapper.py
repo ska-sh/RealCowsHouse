@@ -286,9 +286,7 @@ class Tapper:
         if proxy:
             await self.check_proxy(http_client=http_client, proxy=proxy)
 
-        running = True
-
-        while running:
+        while True:
             try:
                 if login_need:
                     if "Authorization" in http_client.headers:
@@ -307,7 +305,8 @@ class Tapper:
 
                 await self.daily_milk(http_client=http_client, daily_milk=user_info.get('dailyMilk'))
 
-                running = False
+                self.info(f"任务完成，休眠24小时")
+                await asyncio.sleep(24 * 60 * 60)
 
             except InvalidSession as error:
                 raise error
