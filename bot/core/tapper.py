@@ -217,7 +217,7 @@ class Tapper:
                         if task.get('claimed') is False:
                             await asyncio.sleep(random.randint(5, 10))
                             json_data = {"task": task['name']}
-                            logger.info(f"登录是任务：{task['name']}")
+                            self.info(f"登录时任务：{task['name']}")
                             resp = await http_client.post('https://realcowshouse.fun/api/task/claim-social', json=json_data, ssl=False)
                             resp_json = await resp.json()
                             if resp_json['status'] == u'success':
@@ -234,7 +234,7 @@ class Tapper:
             resp_json = await resp.json()
             for task in resp_json['tasks']:
                 if not task['task'].lower() in complete_task:
-                    logger.info(f"做任务：{task['task']}")
+                    self.info(f"做任务：{task['task']}")
                     await self.social_check(http_client=http_client, task=task['task'])
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Get tasks error {error}")
