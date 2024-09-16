@@ -252,8 +252,9 @@ class Tapper:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | social check error {error}")
 
     async def daily_milk(self, http_client: aiohttp.ClientSession, daily_milk: int):
-        try:
-            while daily_milk > 0:
+
+        while daily_milk > 0:
+            try:
                 self.info(f"start play milk")
                 await asyncio.sleep(random.randint(30, 40))
                 ton_amount = "%.3f" % random.uniform(settings.TON_AMOUNT[0], settings.TON_AMOUNT[1])
@@ -266,8 +267,9 @@ class Tapper:
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
                     daily_milk = resp_json['user']['dailyMilk']
                     await asyncio.sleep(random.randint(5, 10))
-        except Exception as e:
-            logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
+            except Exception as e:
+                logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
+                await asyncio.sleep(10)
 
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
         try:
