@@ -1,25 +1,22 @@
 import asyncio
+import json
 import random
-import string
-from time import time
-from urllib.parse import unquote, quote
+from urllib.parse import unquote
 
 import aiohttp
-import json
 from aiocfscrape import CloudflareScraper
 from aiohttp_proxy import ProxyConnector
 from better_proxy import Proxy
 from pyrogram import Client
-from pyrogram.errors import Unauthorized, UserDeactivated, AuthKeyUnregistered, FloodWait
-from pyrogram.raw.functions.messages import RequestAppWebView
+from pyrogram.errors import Unauthorized, UserDeactivated, AuthKeyUnregistered
 from pyrogram.raw import types
-from .agents import generate_random_user_agent
-from bot.config import settings
+from pyrogram.raw.functions.messages import RequestAppWebView
 
-from bot.utils import logger
+from bot.config import settings
 from bot.exceptions import InvalidSession
+from bot.utils import logger
+from .agents import generate_random_user_agent
 from .headers import headers
-from .helper import format_duration
 
 
 class Tapper:
@@ -177,17 +174,17 @@ class Tapper:
     async def login(self, http_client: aiohttp.ClientSession, initdata):
         try:
             while True:
-                    pr = {"startParam": settings.REF_ID}
-                    resp = await http_client.post("https://realcowshouse.fun/api/auth", json=pr, ssl=False)
-                    if resp.status == 520:
-                        self.warning('Relogin')
-                        await asyncio.sleep(delay=3)
-                        continue
-                    resp_json = await resp.json()
-                    initialized = resp_json.get("user").get('initialized')
-                    if not initialized:
-                        await http_client.post("https://realcowshouse.fun/api/user/initial-check", ssl=False)
-                    return resp_json.get("user")
+                pr = {"startParam": settings.REF_ID}
+                resp = await http_client.post("https://realcowshouse.fun/api/auth", json=pr, ssl=False)
+                if resp.status == 520:
+                    self.warning('Relogin')
+                    await asyncio.sleep(delay=3)
+                    continue
+                resp_json = await resp.json()
+                initialized = resp_json.get("user").get('initialized')
+                if not initialized:
+                    await http_client.post("https://realcowshouse.fun/api/user/initial-check", ssl=False)
+                return resp_json.get("user")
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Login error {error}")
             return None, None
@@ -207,7 +204,7 @@ class Tapper:
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Start complete error {error}")
 
-    async def claim_social(self, http_client: aiohttp.ClientSession, user_info: dict,complete_task_list:list):
+    async def claim_social(self, http_client: aiohttp.ClientSession, user_info: dict, complete_task_list: list):
         try:
             if user_info.get('tasks') is not None:
                 for task in user_info.get('tasks'):
@@ -216,11 +213,19 @@ class Tapper:
                             await asyncio.sleep(random.randint(5, 10))
                             json_data = {"task": task['name']}
                             logger.info(f"登录是任务：{task['name']}")
-                            resp = await http_client.post('https://realcowshouse.fun/api/task/claim-social', json=json_data, ssl=False)
-                            resp_json = await resp.json()
-                            if resp_json['status'] == u'success':
-                                complete_task_list.append(task['name'].lower())
-                                self.success(f"claim {task['name']}")
+                            try:
+                                resp = await http_client.post('https://realcowshouse.fun/api/task/claim-social',
+                                                              json=json_data, ssl=False)
+                                #判断返回值不是none
+                                if resp is not None:
+                                    resp_json = await resp.json()
+                                    if resp_json['status'] == u'success':
+                                        complete_task_list.append(task['name'].lower())
+                                        self.success(f"claim {task['name']}")
+                            except Exception as error:
+                                #判断这个任务是不是none
+                                logger.error(
+                                    f"<light-yellow>{self.session_name}</light-yellow> | {task['name']}失败!error {error}")
                         else:
                             complete_task_list.append(task['name'].lower())
                 complete_task_list = list(set(complete_task_list))
@@ -228,7 +233,7 @@ class Tapper:
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | claim_social error {error}")
 
-    async def get_tasks(self, http_client: aiohttp.ClientSession,complete_task_list: list):
+    async def get_tasks(self, http_client: aiohttp.ClientSession, complete_task_list: list):
         try:
             all_task = ['tg-blum-channel-task', 'x-cows-channel-task', 'tg-cows-channel-task', 'tg-dogs-channel-task']
             resp = await http_client.post('https://realcowshouse.fun/api/task/get/all', ssl=False)
@@ -243,12 +248,13 @@ class Tapper:
                 if not alltask.lower() in complete_task_list:
                     logger.info(f"做任务：{alltask}")
                     complete_task_list.append(alltask.lower())
-                    await self.social_check(http_client=http_client, task=alltask,complete_task_list=complete_task_list)
+                    await self.social_check(http_client=http_client, task=alltask,
+                                            complete_task_list=complete_task_list)
             complete_task_list = list(set(complete_task_list))
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Get tasks error {error}")
 
-    async def social_check(self, http_client: aiohttp.ClientSession, task: str,complete_task_list: list):
+    async def social_check(self, http_client: aiohttp.ClientSession, task: str, complete_task_list: list):
         try:
             await asyncio.sleep(random.randint(5, 10))
             json_data = {"task": task}
@@ -256,7 +262,8 @@ class Tapper:
             resp_json = await resp.json()
             if resp_json['status'] == u'success':
                 self.success(f"check success: {task}")
-                await self.claim_social(http_client=http_client, user_info=resp_json.get('user'),complete_task_list=complete_task_list)
+                await self.claim_social(http_client=http_client, user_info=resp_json.get('user'),
+                                        complete_task_list=complete_task_list)
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | social check error {error}")
 
@@ -272,7 +279,8 @@ class Tapper:
                 resp = await http_client.post('https://realcowshouse.fun/api/user/save-ton', json=json_data, ssl=False)
                 resp_json = await resp.json()
                 if resp_json['user']['dailyMilk'] > 0:
-                    self.success(f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
+                    self.success(
+                        f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
                     daily_milk = resp_json['user']['dailyMilk']
                     await asyncio.sleep(random.randint(5, 10))
@@ -312,13 +320,14 @@ class Tapper:
                     self.info(f"登录成功!")
                     login_need = False
                 if settings.DO_TASKS:
-                    #登录进行判断，点击未处理的任务
-                    await self.claim_social(http_client=http_client, user_info=user_info, complete_task_list=complete_task_list)
-                    #进行点start按钮
+                    # 登录进行判断，点击未处理的任务
+                    await self.claim_social(http_client=http_client, user_info=user_info,
+                                            complete_task_list=complete_task_list)
+                    # 进行点start按钮
                     await self.get_tasks(http_client=http_client, complete_task_list=complete_task_list)
-                #签到
+                # 签到
                 await self.daily_reward(http_client=http_client)
-                #点击有牛奶
+                # 点击有牛奶
                 await self.daily_milk(http_client=http_client, daily_milk=user_info.get('dailyMilk'))
                 self.info(f"任务完成，休眠24小时")
                 await asyncio.sleep(24 * 60 * 60)
@@ -327,6 +336,7 @@ class Tapper:
             except Exception as error:
                 logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Unknown error: {error}")
                 await asyncio.sleep(delay=3)
+
 
 async def run_tapper(tg_client: Client, proxy: str | None):
     try:
