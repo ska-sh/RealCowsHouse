@@ -228,7 +228,7 @@ class Tapper:
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | claim_social error {error}")
 
-    async def get_tasks(self, http_client: aiohttp.ClientSession,complete_task_list=list):
+    async def get_tasks(self, http_client: aiohttp.ClientSession,complete_task_list: list):
         try:
             all_task = ['tg-blum-channel-task', 'x-cows-channel-task', 'tg-cows-channel-task', 'tg-dogs-channel-task']
             resp = await http_client.post('https://realcowshouse.fun/api/task/get/all', ssl=False)
@@ -248,7 +248,7 @@ class Tapper:
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Get tasks error {error}")
 
-    async def social_check(self, http_client: aiohttp.ClientSession, task: str,complete_task_list=list):
+    async def social_check(self, http_client: aiohttp.ClientSession, task: str,complete_task_list: list):
         try:
             await asyncio.sleep(random.randint(5, 10))
             json_data = {"task": task}
@@ -261,8 +261,9 @@ class Tapper:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | social check error {error}")
 
     async def daily_milk(self, http_client: aiohttp.ClientSession, daily_milk: int):
-        try:
-            while daily_milk > 0:
+
+        while daily_milk > 0:
+            try:
                 self.info(f"start play milk")
                 await asyncio.sleep(random.randint(30, 40))
                 ton_amount = "%.3f" % random.uniform(settings.TON_AMOUNT[0], settings.TON_AMOUNT[1])
@@ -275,8 +276,9 @@ class Tapper:
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
                     daily_milk = daily_milk - 1
                     await asyncio.sleep(random.randint(5, 10))
-        except Exception as e:
-            logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
+            except Exception as e:
+                logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
+                await asyncio.sleep(60)
 
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
         try:
@@ -311,9 +313,9 @@ class Tapper:
                     login_need = False
                 if settings.DO_TASKS:
                     #登录进行判断，点击未处理的任务
-                    await self.claim_social(http_client=http_client, user_info=user_info,complete_task_list=complete_task_list)
+                    await self.claim_social(http_client=http_client, user_info=user_info, complete_task_list=complete_task_list)
                     #进行点start按钮
-                    await self.get_tasks(http_client=http_client,complete_task_list=complete_task_list)
+                    await self.get_tasks(http_client=http_client, complete_task_list=complete_task_list)
                 #签到
                 await self.daily_reward(http_client=http_client)
                 #点击有牛奶
@@ -325,6 +327,7 @@ class Tapper:
             except Exception as error:
                 logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Unknown error: {error}")
                 await asyncio.sleep(delay=3)
+
 async def run_tapper(tg_client: Client, proxy: str | None):
     try:
         await Tapper(tg_client=tg_client).run(proxy=proxy)
