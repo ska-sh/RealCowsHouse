@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     API_HASH: str
 
     PLAY_GAMES: bool = True
-    POINTS: list[int] = [50, 65]
-    TON_AMOUNT: list[float] = [0.040, 0.055]
+    POINTS: list[int] = [95, 155]
+    TON_AMOUNT: list[float] = [0.095, 0.135]
 
     USE_REF: bool = False
     REF_ID: str = 'kentId6168926126'
