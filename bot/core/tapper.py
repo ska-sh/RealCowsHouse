@@ -274,7 +274,7 @@ class Tapper:
                 if resp_json['user']['dailyMilk'] > 0:
                     self.success(f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
-                    daily_milk = daily_milk - 1
+                    daily_milk = resp_json['user']['dailyMilk']
                     await asyncio.sleep(random.randint(5, 10))
             except Exception as e:
                 logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
@@ -321,7 +321,7 @@ class Tapper:
                 #点击有牛奶
                 await self.daily_milk(http_client=http_client, daily_milk=user_info.get('dailyMilk'))
                 self.info(f"任务完成，休眠24小时")
-                await asyncio.sleep(60)
+                await asyncio.sleep(24 * 60 * 60)
             except InvalidSession as error:
                 raise error
             except Exception as error:
