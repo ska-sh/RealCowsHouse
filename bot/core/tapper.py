@@ -207,39 +207,48 @@ class Tapper:
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Start complete error {error}")
 
-    async def claim_social(self, http_client: aiohttp.ClientSession, user_info: dict):
-        complete_task = []
+    async def claim_social(self, http_client: aiohttp.ClientSession, user_info: dict,complete_task_list:list):
         try:
             if user_info.get('tasks') is not None:
                 for task in user_info.get('tasks'):
                     if not task['name'] == 'daily-reward-task':
-                        complete_task.append(task['name'].lower())
                         if task.get('claimed') is False:
                             await asyncio.sleep(random.randint(5, 10))
                             json_data = {"task": task['name']}
-                            self.info(f"登录时任务：{task['name']}")
+                            logger.info(f"登录是任务：{task['name']}")
                             resp = await http_client.post('https://realcowshouse.fun/api/task/claim-social', json=json_data, ssl=False)
                             resp_json = await resp.json()
                             if resp_json['status'] == u'success':
+                                complete_task_list.append(task['name'].lower())
                                 self.success(f"claim {task['name']}")
-            return complete_task
+                        else:
+                            complete_task_list.append(task['name'].lower())
+                complete_task_list = list(set(complete_task_list))
+            return complete_task_list
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | claim_social error {error}")
 
-    async def get_tasks(self, http_client: aiohttp.ClientSession,complete_task:list):
+    async def get_tasks(self, http_client: aiohttp.ClientSession,complete_task_list=list):
         try:
+            all_task = ['tg-blum-channel-task', 'x-cows-channel-task', 'tg-cows-channel-task', 'tg-dogs-channel-task']
             resp = await http_client.post('https://realcowshouse.fun/api/task/get/all', ssl=False)
             if resp.status not in [200, 201]:
                 return False
             resp_json = await resp.json()
-            for task in resp_json['tasks']:
-                if not task['task'].lower() in complete_task:
-                    self.info(f"做任务：{task['task']}")
-                    await self.social_check(http_client=http_client, task=task['task'])
+            lastList = resp_json['tasks']
+            for task in lastList:
+                if not task['task'].lower() in complete_task_list:
+                    complete_task_list.append(task['task'])
+            for alltask in all_task:
+                if not alltask.lower() in complete_task_list:
+                    logger.info(f"做任务：{alltask}")
+                    complete_task_list.append(alltask.lower())
+                    await self.social_check(http_client=http_client, task=alltask,complete_task_list=complete_task_list)
+            complete_task_list = list(set(complete_task_list))
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Get tasks error {error}")
 
-    async def social_check(self, http_client: aiohttp.ClientSession, task: str):
+    async def social_check(self, http_client: aiohttp.ClientSession, task: str,complete_task_list=list):
         try:
             await asyncio.sleep(random.randint(5, 10))
             json_data = {"task": task}
@@ -247,29 +256,27 @@ class Tapper:
             resp_json = await resp.json()
             if resp_json['status'] == u'success':
                 self.success(f"check success: {task}")
-                await self.claim_social(http_client=http_client, user_info=resp_json.get('user'))
+                await self.claim_social(http_client=http_client, user_info=resp_json.get('user'),complete_task_list=complete_task_list)
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | social check error {error}")
 
     async def daily_milk(self, http_client: aiohttp.ClientSession, daily_milk: int):
-
-        while daily_milk > 0:
-            try:
+        try:
+            while daily_milk > 0:
                 self.info(f"start play milk")
-                await asyncio.sleep(random.randint(40, 50))
+                await asyncio.sleep(random.randint(30, 40))
                 ton_amount = "%.3f" % random.uniform(settings.TON_AMOUNT[0], settings.TON_AMOUNT[1])
                 bonus = random.randint(settings.POINTS[0], settings.POINTS[1])
                 json_data = {"tonAmount": str(ton_amount), "bonus": bonus}
                 resp = await http_client.post('https://realcowshouse.fun/api/user/save-ton', json=json_data, ssl=False)
                 resp_json = await resp.json()
-                if resp_json['status'] == u'success':
+                if resp_json['user']['dailyMilk'] > 0:
                     self.success(f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
-                    daily_milk = resp_json['user']['dailyMilk']
-                    await asyncio.sleep(random.randint(15, 20))
-            except Exception as e:
-                logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
-                await asyncio.sleep(60)
+                    daily_milk = daily_milk - 1
+                    await asyncio.sleep(random.randint(5, 10))
+        except Exception as e:
+            logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
 
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
         try:
@@ -291,7 +298,7 @@ class Tapper:
 
         if proxy:
             await self.check_proxy(http_client=http_client, proxy=proxy)
-
+        complete_task_list = []
         while True:
             try:
                 if login_need:
@@ -302,20 +309,17 @@ class Tapper:
                     user_info = await self.login(http_client=http_client, initdata=init_data)
                     self.info(f"登录成功!")
                     login_need = False
-
                 if settings.DO_TASKS:
                     #登录进行判断，点击未处理的任务
-                    complete_task = await self.claim_social(http_client=http_client, user_info=user_info)
+                    await self.claim_social(http_client=http_client, user_info=user_info,complete_task_list=complete_task_list)
                     #进行点start按钮
-                    await self.get_tasks(http_client=http_client,complete_task=complete_task)
+                    await self.get_tasks(http_client=http_client,complete_task_list=complete_task_list)
                 #签到
                 await self.daily_reward(http_client=http_client)
                 #点击有牛奶
                 await self.daily_milk(http_client=http_client, daily_milk=user_info.get('dailyMilk'))
-
                 self.info(f"任务完成，休眠24小时")
-                await asyncio.sleep(24 * 60 * 60)
-
+                await asyncio.sleep(60)
             except InvalidSession as error:
                 raise error
             except Exception as error:
