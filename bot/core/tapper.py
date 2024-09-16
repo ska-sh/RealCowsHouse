@@ -256,7 +256,7 @@ class Tapper:
         while daily_milk > 0:
             try:
                 self.info(f"start play milk")
-                await asyncio.sleep(random.randint(30, 40))
+                await asyncio.sleep(random.randint(40, 50))
                 ton_amount = "%.3f" % random.uniform(settings.TON_AMOUNT[0], settings.TON_AMOUNT[1])
                 bonus = random.randint(settings.POINTS[0], settings.POINTS[1])
                 json_data = {"tonAmount": str(ton_amount), "bonus": bonus}
@@ -266,10 +266,10 @@ class Tapper:
                     self.success(f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
                     daily_milk = resp_json['user']['dailyMilk']
-                    await asyncio.sleep(random.randint(5, 10))
+                    await asyncio.sleep(random.randint(15, 20))
             except Exception as e:
                 logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Error occurred during play game: {e}")
-                await asyncio.sleep(10)
+                await asyncio.sleep(60)
 
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
         try:
