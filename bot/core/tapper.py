@@ -278,7 +278,7 @@ class Tapper:
                 json_data = {"tonAmount": str(ton_amount), "bonus": bonus}
                 resp = await http_client.post('https://realcowshouse.fun/api/user/save-ton', json=json_data, ssl=False)
                 resp_json = await resp.json()
-                if resp_json['user']['dailyMilk'] > 0:
+                if resp_json['user']['dailyMilk'] >= 0:
                     self.success(
                         f"play milk tonAmount: {ton_amount}, bonus: {bonus}, dailyMilk: {resp_json['user']['dailyMilk']}")
                     self.info(f"point: {resp_json['user']['point']}, ton: {resp_json['user']['ton']}")
