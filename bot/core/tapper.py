@@ -244,6 +244,8 @@ class Tapper:
             for task in lastList:
                 if not task['task'].lower() in complete_task_list:
                     complete_task_list.append(task['task'])
+                    await self.social_check(http_client=http_client, task=task['task'],
+                                            complete_task_list=complete_task_list)
             for alltask in all_task:
                 if not alltask.lower() in complete_task_list:
                     logger.info(f"做任务：{alltask}")
