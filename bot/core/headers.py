@@ -5,7 +5,7 @@ headers = {
     'Connection': 'keep-alive',
     'Content-Type': 'application/json',
     'Origin': 'https://realcowshouse.com',
-    'Sec-Fetch-Site': 'cors-site',
+    'Sec-Fetch-Site': 'cross-site',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Dest': 'empty',
     'Referer': 'https://realcowshouse.com/',
